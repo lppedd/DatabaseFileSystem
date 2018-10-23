@@ -9,14 +9,11 @@ import filesystem.FileSystem;
 /**
  * An implementation of a file system which stores informations in a database.
  *
- * <p>
  * A file system usually handle concurrent read-write operations by locking
  * the requested resources. If a resource is requested for reading, a subsequent
  * write operation
  * must wait for the read operation to be completed, and only then it is performed.
  * <p/>
- *
- * <p>
  * For a database file system implementation, concurrency can be handled by the
  * database itself
  * through the use of transactions and isolation levels.
@@ -29,91 +26,86 @@ import filesystem.FileSystem;
  * {@link Connection#commit()}
  * or a {@link Connection#rollback()} might cause the action to propagate to
  * non-related statements.
- * </p>
  *
  * @author Edoardo Luppi
  */
 public class DbFileSystem implements FileSystem
 {
    private final String uniqueId;
-   private final Property<String> volumeLabel;
+   private String volumeLabel;
    private final String rootPathName;
    private final int clusterSize;
    private DirectoryPath root;
-   private final Property<Boolean> exists;
-   private final Property<Boolean> existsChecked;
-   
+   private boolean exists;
+
    public DbFileSystem(final String volumeLabel, final String rootPathName, final int clusterSize) {
       uniqueId = UUID.randomUUID().toString();
-      this.volumeLabel = new Property<>(volumeLabel);
+      this.volumeLabel = volumeLabel;
       this.clusterSize = clusterSize;
       this.rootPathName = rootPathName;
-      exists = new Property<>(true);
-      existsChecked = new Property<>(false);
+      exists = false;
    }
-   
+
    @Override
    public FileSystem create() {
       if (exists()) {
          FileSystem.error(FileSystem.FILE_SYSTEM_ALREADY_EXIST);
       }
-      
+
       new DbSandbox() {
          @Override
          public void run() {
-            exists.set(sqlInsert());
-            existsChecked.set(true);
+            exists = sqlInsert();
          }
 
          @Override
          public void onFail() {
-            exists.set(false);
-            existsChecked.set(false);
+            exists = false;
          }
       }.execute(false);
 
       return this;
    }
-   
+
    @Override
    public void close() {
       DbSandbox.close();
    }
-   
+
    @Override
    public boolean exists() {
+      final boolean oldExists = exists;
+
       new DbSandbox() {
          @Override
          public void run() {
-            exists.set(sqlSelect());
-            existsChecked.set(true);
+            exists = sqlSelect();
          }
-         
+
          @Override
          public void onFail() {
-            exists.set(false);
-            existsChecked.set(false);
+            exists = oldExists;
          }
       }.execute(false);
-      
-      return exists.get();
+
+      return exists;
    }
 
    @Override
    public String getUniqueId() {
       return uniqueId;
    }
-   
+
    @Override
    public String getVolumeLabel() {
-      return volumeLabel.get();
+      return volumeLabel;
    }
-   
+
    @Override
    public int getClusterSize() {
       return clusterSize;
    }
-   
+
    @Override
    public DirectoryPath getRoot() {
       if (root == null) {
@@ -127,16 +119,18 @@ public class DbFileSystem implements FileSystem
          // FIXME: for demo. Root should be created inside sqlSelect()
          root = new DbDirectory(this, null, rootPathName).create();
       }
-      
+
       return root;
    }
-   
+
    @Override
    public void setVolumeLabel(final String label) {
+      final String oldLabel = volumeLabel;
+
       new DbSandbox() {
          @Override
          public void beforeRun() {
-            volumeLabel.set(label);
+            volumeLabel = label;
          }
 
          @Override
@@ -146,11 +140,11 @@ public class DbFileSystem implements FileSystem
 
          @Override
          public void onFail() {
-            volumeLabel.undo();
+            volumeLabel = oldLabel;
          }
       }.execute(false);
    }
-   
+
    Connection getConnection() {
       // Return a Connection from a connection pool.
       return null;
@@ -159,11 +153,11 @@ public class DbFileSystem implements FileSystem
    private boolean sqlSelect() {
       return false;
    }
-   
+
    private boolean sqlInsert() {
       return true;
    }
-   
+
    private boolean sqlUpdate() {
       return true;
    }

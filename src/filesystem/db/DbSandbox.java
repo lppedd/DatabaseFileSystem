@@ -5,6 +5,9 @@ import java.util.concurrent.Executors;
 
 import filesystem.db.sql.Transaction;
 
+/**
+ * @author Edoardo Luppi
+ */
 public abstract class DbSandbox implements DbRunnable
 {
    /**
@@ -16,7 +19,7 @@ public abstract class DbSandbox implements DbRunnable
    /**
     * Forcedly close the thread(s).
     */
-   public static final void close() {
+   static void close() {
       if (!EXECUTOR.isShutdown()) {
          EXECUTOR.shutdownNow();
       }
@@ -25,7 +28,7 @@ public abstract class DbSandbox implements DbRunnable
    /**
     * Executes the activity.
     */
-   public final void execute(final boolean async) {
+   final void execute(final boolean async) {
       beforeRun();
 
       final Transaction transaction = new Transaction();

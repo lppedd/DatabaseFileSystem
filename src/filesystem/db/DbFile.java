@@ -31,7 +31,7 @@ public class DbFile extends DbObject implements FilePath
     *
     * @author Edoardo Luppi
     */
-   public class DbCluster implements Cluster
+   public static class DbCluster implements Cluster
    {
       private final FilePath parent;
       private byte[] data;

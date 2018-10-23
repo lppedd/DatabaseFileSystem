@@ -1,5 +1,8 @@
 package filesystem.db;
 
+/**
+ * @author Edoardo Luppi
+ */
 public interface DbRunnable extends Runnable
 {
    /**

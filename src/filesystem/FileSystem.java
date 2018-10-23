@@ -2,6 +2,9 @@ package filesystem;
 
 import filesystem.exceptions.FileSystemRuntimeException;
 
+/**
+ * @author Edoardo Luppi
+ */
 public interface FileSystem
 {
    /**

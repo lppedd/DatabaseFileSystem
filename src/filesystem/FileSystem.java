@@ -5,7 +5,7 @@ import filesystem.exceptions.FileSystemRuntimeException;
 /**
  * @author Edoardo Luppi
  */
-public interface FileSystem
+public interface FileSystem extends AutoCloseable
 {
    /**
     * Creates the file system.
@@ -17,6 +17,7 @@ public interface FileSystem
    /**
     * Closes the file system, freeing any related resource.
     */
+   @Override
    void close();
    
    /**
